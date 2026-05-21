@@ -1,0 +1,1007 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+<title>التصويت والخيانة</title>
+<style>
+  :root {
+    --bg: #0b0d12;
+    --bg-2: #131722;
+    --card: #1a1f2e;
+    --border: #2a3142;
+    --text: #f1f5f9;
+    --muted: #94a3b8;
+    --accent: #f59e0b;
+    --accent-2: #ef4444;
+    --good: #22c55e;
+    --bad: #ef4444;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font-family: 'Tajawal', 'Cairo', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    overflow-x: hidden; min-height: 100vh; }
+  body {
+    background:
+      radial-gradient(1200px 600px at 50% -10%, rgba(245,158,11,0.12), transparent 60%),
+      radial-gradient(800px 500px at 100% 100%, rgba(239,68,68,0.10), transparent 60%),
+      var(--bg);
+  }
+  .app { max-width: 520px; margin: 0 auto; padding: 20px 16px 80px; }
+  .screen { animation: fade .35s ease both; }
+  @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .logo { text-align: center; margin: 18px 0 24px; }
+  .logo h1 { margin: 0; font-size: 32px; letter-spacing: .5px;
+    background: linear-gradient(135deg, #f59e0b, #ef4444);
+    -webkit-background-clip: text; background-clip: text; color: transparent; font-weight: 900; }
+  .logo p { color: var(--muted); margin: 4px 0 0; font-size: 14px; }
+  .card { background: linear-gradient(180deg, var(--card), var(--bg-2));
+    border: 1px solid var(--border); border-radius: 18px; padding: 18px; margin-bottom: 14px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.3); }
+  label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  input[type=text], input[type=number] {
+    width: 100%; padding: 14px 14px; border-radius: 12px; border: 1px solid var(--border);
+    background: #0f1320; color: var(--text); font-size: 16px; outline: none; font-family: inherit;
+    text-align: right;
+  }
+  input:focus { border-color: var(--accent); }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; padding: 14px 16px; border-radius: 12px; border: 0; cursor: pointer;
+    font-size: 16px; font-weight: 700; font-family: inherit;
+    background: linear-gradient(135deg, #f59e0b, #ef4444); color: #1a1200;
+    transition: transform .15s ease, filter .15s ease, opacity .15s ease;
+    margin-top: 8px;
+  }
+  .btn:active { transform: scale(.98); }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .btn.secondary { background: #243049; color: var(--text); }
+  .btn.ghost { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  .btn.danger { background: linear-gradient(135deg, #ef4444, #b91c1c); color: #fff; }
+  .btn.good { background: linear-gradient(135deg, #22c55e, #15803d); color: #06200e; }
+  .row { display: flex; gap: 10px; }
+  .row > * { flex: 1; }
+  .muted { color: var(--muted); font-size: 13px; }
+  .badge { display: inline-block; padding: 4px 10px; border-radius: 999px;
+    background: #243049; color: var(--text); font-size: 12px; }
+  .code-box { font-size: 28px; letter-spacing: 8px; font-weight: 900;
+    background: #0f1320; padding: 12px; border-radius: 12px; text-align: center;
+    border: 1px dashed var(--border); }
+  .palette { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 10px; }
+  .swatch { aspect-ratio: 1/1; border-radius: 14px; border: 2px solid var(--border);
+    position: relative; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; transition: transform .12s ease; }
+  .swatch:active { transform: scale(.94); }
+  .swatch.taken { opacity: .25; cursor: not-allowed; }
+  .swatch.mine { outline: 3px solid #fff; outline-offset: 2px; }
+  .players { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+  .player {
+    display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+    background: #0f1320; border: 1px solid var(--border); border-radius: 12px;
+  }
+  .player .dot { width: 14px; height: 14px; border-radius: 50%; flex: 0 0 auto;
+    box-shadow: 0 0 0 2px rgba(255,255,255,.08); }
+  .player .nm { flex: 1; font-weight: 700; }
+  .player .meta { color: var(--muted); font-size: 12px; }
+  .player.dead { opacity: .55; text-decoration: line-through; }
+  .player.offline { opacity: .5; filter: grayscale(.7); }
+  .player .offline-tag { background:#3b0d0d; color:#fecaca; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; margin-inline-start: 6px; }
+  .player .kick-btn { background: transparent; border: 1px solid #7f1d1d; color: #fecaca; padding: 4px 8px; border-radius: 8px; font-size: 12px; cursor: pointer; font-family: inherit; }
+  .player .kick-btn:active { transform: scale(.94); }
+  .vote-btn {
+    width: 100%; display: flex; align-items: center; gap: 10px; padding: 14px;
+    border-radius: 14px; border: 2px solid var(--border); background: #0f1320; color: var(--text);
+    font-family: inherit; font-size: 16px; font-weight: 700; cursor: pointer; margin-bottom: 8px;
+    transition: transform .12s ease, border-color .15s;
+  }
+  .vote-btn:active { transform: scale(.98); }
+  .vote-btn .dot { width: 16px; height: 16px; border-radius: 50%; }
+  .vote-btn.selected { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(245,158,11,.2); }
+  .vote-btn.protect { background: linear-gradient(135deg, #1e293b, #0f172a); border-color: #334155; }
+  .timer { text-align: center; font-size: 44px; font-weight: 900; margin: 8px 0;
+    background: linear-gradient(135deg,#f59e0b,#ef4444); -webkit-background-clip: text; background-clip: text; color: transparent;
+    animation: pulse 1s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{ transform: scale(1);} 50%{ transform: scale(1.06);} }
+  .phase-title { text-align: center; font-size: 22px; font-weight: 900; margin: 2px 0 4px; }
+  .phase-sub { text-align: center; color: var(--muted); font-size: 13px; margin-bottom: 12px; }
+  .lock-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .chip { padding: 4px 10px; border-radius: 999px; font-size: 12px; background: #243049; }
+  .chip.locked { background: #14532d; color: #bbf7d0; }
+  .results { display: flex; flex-direction: column; gap: 8px; }
+  .vote-line { display: flex; justify-content: space-between; padding: 10px;
+    background: #0f1320; border-radius: 10px; border: 1px solid var(--border); }
+  .gold-card { perspective: 1000px; margin: 14px auto; width: 200px; height: 280px; }
+  .gold-inner { position: relative; width: 100%; height: 100%;
+    transform-style: preserve-3d; animation: flipIn 1s ease forwards; }
+  @keyframes flipIn { from { transform: rotateY(180deg); } to { transform: rotateY(0); } }
+  .gold-face {
+    position: absolute; inset: 0; border-radius: 18px; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #fde047, #f59e0b, #b45309);
+    color: #2a1700; font-weight: 900; box-shadow: 0 20px 40px rgba(245,158,11,.4);
+    backface-visibility: hidden;
+  }
+  .gold-face .num { font-size: 90px; line-height: 1; }
+  .gold-face .lbl { font-size: 14px; margin-top: 8px; letter-spacing: 2px; }
+  .leaderboard { display: flex; flex-direction: column; gap: 8px; }
+  .lb-row { display: flex; align-items: center; gap: 10px; padding: 12px;
+    background: #0f1320; border: 1px solid var(--border); border-radius: 12px; }
+  .lb-row .rank { width: 28px; height: 28px; border-radius: 50%; background: #243049;
+    display: flex; align-items: center; justify-content: center; font-weight: 900; }
+  .lb-row.win { border-color: #f59e0b; background: linear-gradient(135deg, rgba(245,158,11,.15), #0f1320); }
+  .lb-row .pts { font-weight: 900; color: var(--accent); }
+  .small { font-size: 13px; }
+  .finalists { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; margin: 14px 0 6px; }
+  .finalist { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 10px;
+    background: #0f1320; border: 1px solid var(--border); border-radius: 14px; position: relative; transition: all .25s; }
+  .finalist.ready { border-color: #22c55e; background: linear-gradient(135deg, rgba(34,197,94,.15), #0f1320); box-shadow: 0 0 0 2px rgba(34,197,94,.25); }
+  .finalist .avatar { width: 52px; height: 52px; border-radius: 50%; border: 3px solid #fff2; box-shadow: 0 4px 12px rgba(0,0,0,.4); }
+  .finalist .fname { font-weight: 800; font-size: 15px; text-align: center; }
+  .finalist .fstatus { font-size: 12px; padding: 4px 10px; border-radius: 999px; font-weight: 700; }
+  .finalist .fstatus.thinking { background: #1e293b; color: #fbbf24; }
+  .finalist .fstatus.ready { background: #14532d; color: #bbf7d0; }
+  .finalist .dots span { display: inline-block; width: 5px; height: 5px; margin: 0 1px; border-radius: 50%; background: #fbbf24; animation: blink 1.2s infinite; }
+  .finalist .dots span:nth-child(2) { animation-delay: .2s; }
+  .finalist .dots span:nth-child(3) { animation-delay: .4s; }
+  @keyframes blink { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
+  .vs-badge { font-weight: 900; font-size: 18px; color: var(--accent); letter-spacing: 1px;
+    background: #1e293b; border: 1px solid var(--border); border-radius: 50%; width: 44px; height: 44px;
+    display: flex; align-items: center; justify-content: center; }
+  .error { background: #3b0d0d; color: #fecaca; padding: 10px; border-radius: 10px;
+    border: 1px solid #7f1d1d; margin-top: 10px; font-size: 14px; text-align: center; }
+  .center { text-align: center; }
+  hr.sep { border: 0; border-top: 1px solid var(--border); margin: 14px 0; }
+
+  /* Persistent room code badge */
+  #roomCodeBadge {
+    position: fixed; top: 10px; left: 10px; z-index: 1000;
+    background: rgba(15,19,32,0.85); backdrop-filter: blur(8px);
+    border: 1px solid var(--border); border-radius: 999px;
+    padding: 6px 12px; font-size: 12px; color: var(--muted);
+    font-weight: 700; display: none; align-items: center; gap: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,.4);
+  }
+  #roomCodeBadge .rc-code {
+    color: var(--accent); letter-spacing: 3px; font-size: 14px; font-weight: 900;
+  }
+
+  /* 4-cards showdown display */
+  .gold-cards-row { display: flex; justify-content: center; gap: 8px; margin: 14px 0; flex-wrap: wrap; }
+  .mini-gold {
+    width: 56px; height: 80px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 900; font-size: 26px;
+    background: linear-gradient(135deg, #fde047, #f59e0b, #b45309);
+    color: #2a1700; box-shadow: 0 6px 14px rgba(245,158,11,.35);
+    border: 2px solid #b45309;
+  }
+  .mini-gold.hidden-card {
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    color: #f59e0b; border-color: var(--border);
+  }
+  .reward-line {
+    display: flex; justify-content: space-between; align-items: center; gap: 10px;
+    padding: 10px 12px; background: #0f1320; border-radius: 10px;
+    border: 1px solid var(--border); margin-top: 6px;
+  }
+  .reward-line .who { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+  .reward-line .gained { color: var(--accent); font-weight: 900; font-size: 14px; }
+  .reward-line .gained.zero { color: var(--muted); }
+
+  /* Showdown card-reveal animation stage */
+  .showdown-stage {
+    position: relative; height: 220px; margin: 14px 0;
+    background: radial-gradient(closest-side, rgba(245,158,11,0.12), transparent 70%);
+    border-radius: 14px; overflow: hidden;
+  }
+  .stage-target {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    width: 60px; height: 60px; border-radius: 50%;
+    border: 3px solid #fff3; box-shadow: 0 4px 12px rgba(0,0,0,.4);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 900; color: #fff; text-align: center;
+  }
+  .stage-target.right { right: 8px; }
+  .stage-target.left  { left: 8px; }
+  .stage-target .lbl { position: absolute; bottom: -22px; font-size: 11px; color: var(--muted); white-space: nowrap; left:50%; transform:translateX(-50%); }
+
+  .fly-card {
+    position: absolute; top: 50%; left: 50%;
+    width: 90px; height: 130px; border-radius: 14px;
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    color: #f59e0b; border: 2px solid #b45309;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-weight: 900; box-shadow: 0 14px 30px rgba(0,0,0,.5);
+    transform: translate(-50%, -50%) scale(0) rotateY(180deg);
+    opacity: 0;
+    transition: transform .9s cubic-bezier(.34,1.56,.64,1), opacity .5s ease, background .35s;
+    z-index: 5;
+  }
+  .fly-card .num { font-size: 48px; line-height: 1; }
+  .fly-card .lbl { font-size: 10px; letter-spacing: 1px; margin-top: 4px; }
+  .fly-card.appearing {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1) rotateY(180deg);
+  }
+  .fly-card.revealed {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.05) rotateY(0);
+    background: linear-gradient(135deg, #fde047, #f59e0b, #b45309);
+    color: #2a1700;
+    box-shadow: 0 20px 40px rgba(245,158,11,.55);
+  }
+  .fly-card.to-right {
+    transform: translate(calc(-50% + 38vw), -50%) scale(.45) rotateY(0);
+    opacity: 0;
+  }
+  .fly-card.to-left {
+    transform: translate(calc(-50% - 38vw), -50%) scale(.45) rotateY(0);
+    opacity: 0;
+  }
+  .fly-card.discard {
+    transform: translate(-50%, calc(-50% + 200px)) scale(.3) rotate(220deg);
+    opacity: 0;
+  }
+  .stage-target.flash {
+    animation: targetFlash .6s ease;
+  }
+  @keyframes targetFlash {
+    0%   { box-shadow: 0 0 0 0 rgba(245,158,11,.7); transform: translateY(-50%) scale(1); }
+    50%  { box-shadow: 0 0 0 14px rgba(245,158,11,0); transform: translateY(-50%) scale(1.15); }
+    100% { box-shadow: 0 0 0 0 rgba(245,158,11,0); transform: translateY(-50%) scale(1); }
+  }
+  .skip-anim {
+    text-align:center; margin-top:6px;
+  }
+  .skip-anim button {
+    background: transparent; border: 1px solid var(--border); color: var(--muted);
+    padding: 4px 12px; border-radius: 999px; font-family: inherit; font-size: 12px; cursor: pointer;
+  }
+</style>
+</head>
+<body>
+<div id="roomCodeBadge"><span>كود الجلسة:</span><span class="rc-code" id="roomCodeBadgeText"></span></div>
+<div class="app" id="app"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const socket = io({ transports: ['websocket','polling'] });
+let state = null;
+let myName = localStorage.getItem('vb_name') || '';
+let lastErr = '';
+
+// ===== Session persistence (survive refresh / brief disconnect) =====
+function loadSession() {
+  try {
+    const raw = sessionStorage.getItem('vb_session');
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+function saveSession(code, playerKey) {
+  sessionStorage.setItem('vb_session', JSON.stringify({ code, playerKey }));
+}
+function clearSession() { sessionStorage.removeItem('vb_session'); }
+
+function tryReconnect() {
+  const sess = loadSession();
+  if (!sess || !sess.code || !sess.playerKey) return false;
+  socket.emit('reconnectPlayer', sess, (res) => {
+    if (res && res.error) { clearSession(); lastErr = ''; state = null; render(); }
+  });
+  return true;
+}
+
+const app = document.getElementById('app');
+
+function fmtTimer(end) {
+  const s = Math.max(0, Math.ceil((end - Date.now()) / 1000));
+  return s;
+}
+
+function updateRoomCodeBadge() {
+  const el = document.getElementById('roomCodeBadge');
+  const txt = document.getElementById('roomCodeBadgeText');
+  if (!el || !txt) return;
+  if (state && state.code) {
+    txt.textContent = state.code;
+    el.style.display = 'inline-flex';
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+function render() {
+  app.innerHTML = '';
+  updateRoomCodeBadge();
+  if (!state) {
+    renderHome();
+  } else {
+    switch (state.phase) {
+      case 'lobby': renderLobby(); break;
+      case 'discussion': renderDiscussion(); break;
+      case 'voting': renderVoting(); break;
+      case 'retaliation': renderRetaliation(); break;
+      case 'resolution': renderResolution(); break;
+      case 'showdown': renderShowdown(); break;
+      case 'gameover': renderGameOver(); break;
+    }
+  }
+}
+
+function header() {
+  const h = document.createElement('div');
+  h.className = 'logo';
+  h.innerHTML = `<h1>التصويت والخيانة</h1><p>لعبة الخداع والتحالفات</p>`;
+  return h;
+}
+
+function errorBox() {
+  if (!lastErr) return null;
+  const d = document.createElement('div');
+  d.className = 'error';
+  d.textContent = lastErr;
+  return d;
+}
+
+function renderHome() {
+  const s = document.createElement('div');
+  s.className = 'screen';
+  s.appendChild(header());
+
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.innerHTML = `
+    <label>اسمك</label>
+    <input id="nameInput" type="text" maxlength="20" placeholder="اكتب اسمك..." value="${escapeHtml(myName)}" />
+    <hr class="sep" />
+    <button class="btn" id="createBtn">إنشاء غرفة</button>
+    <div style="height:14px"></div>
+    <label>الانضمام بكود الغرفة</label>
+    <input id="codeInput" type="text" maxlength="4" placeholder="ABCD" style="text-transform:uppercase;letter-spacing:6px;text-align:center" />
+    <button class="btn secondary" id="joinBtn">الانضمام لغرفة</button>
+  `;
+  s.appendChild(card);
+  const e = errorBox(); if (e) s.appendChild(e);
+  app.appendChild(s);
+
+  document.getElementById('nameInput').addEventListener('input', e => {
+    myName = e.target.value;
+    localStorage.setItem('vb_name', myName);
+  });
+  document.getElementById('createBtn').onclick = () => {
+    const name = document.getElementById('nameInput').value.trim();
+    if (!name) { lastErr = 'اكتب اسمك أولاً'; render(); return; }
+    socket.emit('createRoom', { name }, (res) => {
+      if (res.error) { lastErr = res.error; render(); }
+      else { lastErr = ''; saveSession(res.code, res.playerKey); }
+    });
+  };
+  document.getElementById('joinBtn').onclick = () => {
+    const name = document.getElementById('nameInput').value.trim();
+    const code = document.getElementById('codeInput').value.trim().toUpperCase();
+    if (!name) { lastErr = 'اكتب اسمك أولاً'; render(); return; }
+    if (code.length !== 4) { lastErr = 'كود الغرفة يجب أن يكون 4 أحرف'; render(); return; }
+    socket.emit('joinRoom', { code, name }, (res) => {
+      if (res.error) { lastErr = res.error; render(); }
+      else { lastErr = ''; saveSession(res.code, res.playerKey); }
+    });
+  };
+}
+
+function renderLobby() {
+  const s = document.createElement('div'); s.className = 'screen';
+  s.appendChild(header());
+
+  const codeCard = document.createElement('div');
+  codeCard.className = 'card center';
+  codeCard.innerHTML = `<div class="muted">كود الغرفة</div><div class="code-box">${state.code}</div><div class="muted small" style="margin-top:6px">شارك هذا الكود مع أصدقائك</div>`;
+  s.appendChild(codeCard);
+
+  const me = state.me;
+  const paletteCard = document.createElement('div');
+  paletteCard.className = 'card';
+  paletteCard.innerHTML = `<label>مرحبًا، <b>${escapeHtml(me.name)}</b> — اختر لونك</label>`;
+  const grid = document.createElement('div'); grid.className = 'palette';
+  state.palette.forEach(c => {
+    const sw = document.createElement('div');
+    sw.className = 'swatch';
+    if (c.taken) sw.classList.add('taken');
+    if (me.colorId === c.id) sw.classList.add('mine');
+    sw.style.background = c.hex;
+    sw.style.color = ['white','yellow'].includes(c.id) ? '#000' : '#fff';
+    sw.textContent = c.name;
+    if (!c.taken || me.colorId === c.id) {
+      sw.onclick = () => socket.emit('pickColor', { colorId: c.id });
+    }
+    grid.appendChild(sw);
+  });
+  paletteCard.appendChild(grid);
+  s.appendChild(paletteCard);
+
+  const pcard = document.createElement('div'); pcard.className = 'card';
+  pcard.innerHTML = `<label>اللاعبون (${state.players.length}/12)</label>`;
+  const list = document.createElement('div'); list.className = 'players';
+  state.players.forEach(p => {
+    const row = document.createElement('div');
+    row.className = 'player' + (p.connected ? '' : ' offline');
+    const col = state.palette.find(c => c.id === p.colorId);
+    const offTag = p.connected ? '' : '<span class="offline-tag">غائب</span>';
+    const canKick = state.isHost && p.id !== state.me.id;
+    row.innerHTML = `
+      <div class="dot" style="background:${col ? col.hex : '#555'}"></div>
+      <div class="nm">${escapeHtml(p.name)} ${p.id === state.hostId ? '<span class="badge">المضيف</span>' : ''}${offTag}</div>
+      <div class="meta">${p.colorId ? (col?col.name:'') : 'لم يختر لون'}</div>
+      ${canKick ? `<button class="kick-btn" data-kick="${p.id}">طرد</button>` : ''}
+    `;
+    list.appendChild(row);
+  });
+  if (state.isHost) {
+    list.querySelectorAll('[data-kick]').forEach(btn => {
+      btn.onclick = () => {
+        if (confirm('طرد هذا اللاعب نهائياً؟')) socket.emit('kickPlayer', { playerKey: btn.dataset.kick });
+      };
+    });
+  }
+  pcard.appendChild(list);
+  s.appendChild(pcard);
+
+  if (state.isHost) {
+    const set = document.createElement('div'); set.className = 'card';
+    set.innerHTML = `
+      <label>إعدادات اللعبة (المضيف فقط)</label>
+      <div class="row"><div>
+        <label class="small">نقاط الفوز (1-100)</label>
+        <input id="ts" type="number" min="1" max="100" value="${state.settings.targetScore}" />
+      </div><div>
+        <label class="small">وقت النقاش (ثانية)</label>
+        <input id="ds" type="number" min="5" max="600" value="${state.settings.discussionSec}" />
+      </div></div>
+      <div style="height:8px"></div>
+      <div class="row"><div>
+        <label class="small">وقت التصويت (ثانية)</label>
+        <input id="vs" type="number" min="5" max="300" value="${state.settings.votingSec}" />
+      </div><div>
+        <label class="small">وقت المواجهة (ثانية)</label>
+        <input id="ss" type="number" min="5" max="300" value="${state.settings.showdownSec}" />
+      </div></div>
+      <button class="btn secondary" id="saveSet">حفظ الإعدادات</button>
+      <hr class="sep" />
+      <button class="btn" id="startBtn">بدء اللعبة</button>
+      <div class="muted small center" style="margin-top:6px">الحد الأدنى 3 لاعبين، الجميع يجب أن يختار لوناً</div>
+    `;
+    s.appendChild(set);
+    setTimeout(() => {
+      document.getElementById('saveSet').onclick = () => {
+        socket.emit('updateSettings', {
+          targetScore: +document.getElementById('ts').value,
+          discussionSec: +document.getElementById('ds').value,
+          votingSec: +document.getElementById('vs').value,
+          showdownSec: +document.getElementById('ss').value,
+        });
+      };
+      const startBtn = document.getElementById('startBtn');
+      const canStart = state.players.length >= 3 && state.players.every(p => p.colorId);
+      startBtn.disabled = !canStart;
+      startBtn.onclick = () => socket.emit('startGame');
+    });
+  } else {
+    const w = document.createElement('div'); w.className = 'card center muted';
+    w.textContent = 'في انتظار المضيف لبدء اللعبة...';
+    s.appendChild(w);
+  }
+
+  app.appendChild(s);
+}
+
+function colorOf(id) {
+  if (!state) return '#555';
+  const p = state.players.find(x => x.id === id);
+  if (!p) return '#555';
+  const c = state.palette.find(x => x.id === p.colorId);
+  return c ? c.hex : '#555';
+}
+function nameOf(id) {
+  const p = state.players.find(x => x.id === id);
+  return p ? p.name : '?';
+}
+
+function timerEl() {
+  const t = document.createElement('div');
+  t.className = 'timer';
+  const update = () => { t.textContent = fmtTimer(state.timerEnd) + 'ث'; };
+  update();
+  const iv = setInterval(() => {
+    if (!state || state.timerEnd === 0) { clearInterval(iv); return; }
+    update();
+  }, 250);
+  return t;
+}
+
+function playerScoreCard() {
+  const c = document.createElement('div');
+  c.className = 'card center';
+  c.innerHTML = `
+    <div class="muted small">نقاطك (مخفية عن الآخرين)</div>
+    <div style="font-size:32px; font-weight:900; color:var(--accent)">${state.me.score}</div>
+    <div class="muted small">هدف الفوز: ${state.settings.targetScore} • الجولة ${state.round}</div>
+  `;
+  return c;
+}
+
+function activePlayersList(title) {
+  const c = document.createElement('div'); c.className = 'card';
+  c.innerHTML = `<label>${title}</label>`;
+  const list = document.createElement('div'); list.className = 'players';
+  state.players.forEach(p => {
+    const row = document.createElement('div');
+    row.className = 'player' + (p.alive ? '' : ' dead') + (p.connected ? '' : ' offline');
+    const offTag = p.connected ? '' : '<span class="offline-tag">غائب</span>';
+    row.innerHTML = `
+      <div class="dot" style="background:${colorOf(p.id)}"></div>
+      <div class="nm">${escapeHtml(p.name)}${p.id === state.me.id ? ' (أنت)' : ''}${offTag}</div>
+      <div class="meta">${p.alive ? 'حي' : 'خارج الجولة'}</div>
+    `;
+    list.appendChild(row);
+  });
+  c.appendChild(list);
+  return c;
+}
+
+function renderDiscussion() {
+  const s = document.createElement('div'); s.className = 'screen';
+  s.appendChild(header());
+  const card = document.createElement('div'); card.className = 'card';
+  card.innerHTML = `<div class="phase-title">وقت النقاش</div><div class="phase-sub">تحدثوا وتشاوروا قبل التصويت</div>`;
+  if (state.timerEnd > 0) {
+    card.appendChild(timerEl());
+    if (state.isHost) {
+      const endBtn = document.createElement('button');
+      endBtn.className = 'btn danger';
+      endBtn.textContent = '⏭️ إنهاء النقاش والذهاب للتصويت';
+      endBtn.onclick = () => socket.emit('endDiscussion');
+      card.appendChild(endBtn);
+    }
+  } else {
+    const w = document.createElement('div'); w.className = 'center muted';
+    w.style.padding = '10px';
+    w.textContent = state.isHost ? 'اضغط لبدء مؤقت النقاش' : 'بانتظار المضيف لبدء النقاش...';
+    card.appendChild(w);
+    if (state.isHost) {
+      const startT = document.createElement('button');
+      startT.className = 'btn';
+      startT.textContent = '▶️ ابدأ مؤقت النقاش';
+      startT.onclick = () => socket.emit('startDiscussionTimer');
+      card.appendChild(startT);
+      const endBtn = document.createElement('button');
+      endBtn.className = 'btn danger';
+      endBtn.textContent = '⏭️ تخطي النقاش والذهاب للتصويت';
+      endBtn.onclick = () => socket.emit('endDiscussion');
+      card.appendChild(endBtn);
+    }
+  }
+  s.appendChild(card);
+  s.appendChild(activePlayersList('اللاعبون الأحياء'));
+  s.appendChild(playerScoreCard());
+  app.appendChild(s);
+}
+
+function renderVoting() {
+  const s = document.createElement('div'); s.className = 'screen';
+  s.appendChild(header());
+
+  const card = document.createElement('div'); card.className = 'card';
+  card.innerHTML = `<div class="phase-title">وقت التصويت</div><div class="phase-sub">صوّت لإقصاء لاعب أو استخدم الحماية</div>`;
+  if (state.timerEnd > 0) {
+    card.appendChild(timerEl());
+  } else {
+    const w = document.createElement('div'); w.className = 'center muted';
+    w.style.padding = '10px';
+    w.textContent = 'المؤقت يبدأ عند أول تصويت';
+    card.appendChild(w);
+  }
+  s.appendChild(card);
+
+  if (!state.me.alive) {
+    const d = document.createElement('div'); d.className = 'card center';
+    d.innerHTML = `<div class="phase-title" style="color:#ef4444">أنت خارج الجولة</div><div class="muted">شاهد بقية الجولة</div>`;
+    s.appendChild(d);
+    s.appendChild(activePlayersList('اللاعبون الأحياء'));
+    app.appendChild(s);
+    return;
+  }
+
+  const hasVoted = (state.votedIds || []).includes(state.me.id);
+  const votesCard = document.createElement('div'); votesCard.className = 'card';
+  if (hasVoted) {
+    votesCard.innerHTML = `<label>تم تثبيت تصويتك ✓</label><div class="muted small">لا يمكن تغيير التصويت. بانتظار باقي اللاعبين...</div>`;
+  } else {
+    votesCard.innerHTML = `<label>اختر هدفك</label>`;
+    state.players.forEach(p => {
+      if (!p.alive || p.id === state.me.id) return;
+      const b = document.createElement('button'); b.className = 'vote-btn';
+      b.innerHTML = `<span class="dot" style="background:${colorOf(p.id)}"></span><span>${escapeHtml(p.name)}</span>`;
+      b.onclick = () => socket.emit('submitVote', { vote: p.id });
+      votesCard.appendChild(b);
+    });
+    const pb = document.createElement('button'); pb.className = 'vote-btn protect';
+    pb.innerHTML = `🛡️ الحماية (إذا أصبحت الهدف ستنجو، وإلا ستُقصى)`;
+    pb.onclick = () => socket.emit('submitVote', { vote: 'PROTECT' });
+    votesCard.appendChild(pb);
+  }
+  s.appendChild(votesCard);
+
+  const lock = document.createElement('div'); lock.className = 'card';
+  lock.innerHTML = `<label>حالة التصويت</label>`;
+  const chips = document.createElement('div'); chips.className = 'lock-list';
+  state.players.filter(p => p.alive).forEach(p => {
+    const ch = document.createElement('span');
+    const voted = (state.votedIds || []).includes(p.id);
+    ch.className = 'chip' + (voted ? ' locked' : '');
+    ch.textContent = p.name + (voted ? ' ✓' : ' …');
+    chips.appendChild(ch);
+  });
+  lock.appendChild(chips);
+  s.appendChild(lock);
+
+  app.appendChild(s);
+}
+
+function renderRetaliation() {
+  const s = document.createElement('div'); s.className = 'screen';
+  s.appendChild(header());
+  const isMe = state.pendingRetaliationBy === state.me.id;
+  const c = document.createElement('div'); c.className = 'card center';
+  c.innerHTML = `<div class="phase-title">حماية ناجحة!</div>
+    <div class="phase-sub">${isMe ? 'اختر لاعباً من المهاجمين لإقصائه فوراً' : 'بانتظار اللاعب المحمي ليختار من سيُقصى'}</div>`;
+  s.appendChild(c);
+
+  if (isMe && state.lastResults && state.lastResults.retaliationPool) {
+    const card = document.createElement('div'); card.className = 'card';
+    card.innerHTML = `<label>هاجموك — اختر من سيُقصى</label>`;
+    state.lastResults.retaliationPool.forEach(id => {
+      const b = document.createElement('button'); b.className = 'vote-btn';
+      b.innerHTML = `<span class="dot" style="background:${colorOf(id)}"></span><span>${escapeHtml(nameOf(id))}</span>`;
+      b.onclick = () => socket.emit('retaliate', { targetId: id });
+      card.appendChild(b);
+    });
+    s.appendChild(card);
+  }
+  s.appendChild(activePlayersList('اللاعبون'));
+  app.appendChild(s);
+}
+
+function renderResolution() {
+  const s = document.createElement('div'); s.className = 'screen';
+  s.appendChild(header());
+
+  const r = state.lastResults;
+  const c = document.createElement('div'); c.className = 'card';
+  if (r && r.showdown) {
+    c.innerHTML = `<div class="phase-title">نتائج المواجهة</div>`;
+    const sd = r.showdown;
+    const labelFor = ch => ({ share: 'مشاركة', steal: 'سرقة', guarantee: 'ضمان' })[ch];
+    const cardsAll = sd.cards || [];
+    const assignments = sd.assignments || [];
+
+    // Animated stage: each of the 4 cards appears in center, flips to reveal,
+    // pauses, then flies toward the winner (right=a, left=b) or drops (discard).
+    const stage = document.createElement('div');
+    stage.className = 'showdown-stage';
+    const aName = nameOf(sd.a.id);
+    const bName = nameOf(sd.b.id);
+    stage.innerHTML = `
+      <div class="stage-target right" id="tgt-a" style="background:${colorOf(sd.a.id)}">
+        <span class="lbl">${escapeHtml(aName)}</span>
+      </div>
+      <div class="stage-target left" id="tgt-b" style="background:${colorOf(sd.b.id)}">
+        <span class="lbl">${escapeHtml(bName)}</span>
+      </div>
+    `;
+    c.appendChild(stage);
+
+    // Static fallback row (filled in after animation, or immediately if replaying)
+    const cardsRow = document.createElement('div');
+    cardsRow.className = 'gold-cards-row';
+    cardsRow.style.opacity = '0';
+    cardsRow.style.transition = 'opacity .4s ease';
+    cardsRow.innerHTML = cardsAll.map(v => `<div class="mini-gold">${v}</div>`).join('');
+    c.appendChild(cardsRow);
+
+    const fmtReward = (rec) => {
+      const n = (rec.cards || []).length;
+      if (n === 0) return 'لم يأخذ أي بطاقة';
+      if (n === 1) return `أخذ بطاقة واحدة (النقاط: ${rec.cards[0]}) — كسب ${rec.points}`;
+      return `أخذ ${n} بطاقات (النقاط: ${rec.cards.join(', ')}) — كسب ${rec.points}`;
+    };
+    const showdownBox = document.createElement('div');
+    showdownBox.className = 'results';
+    showdownBox.style.opacity = '0';
+    showdownBox.style.transition = 'opacity .4s ease';
+    const lineFor = (rec) => `
+      <div class="reward-line">
+        <div class="who">
+          <span class="dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${colorOf(rec.id)}"></span>
+          <span>${escapeHtml(nameOf(rec.id))} <span class="muted small">(${labelFor(rec.choice)})</span></span>
+        </div>
+        <div class="gained ${rec.points === 0 ? 'zero' : ''}">${fmtReward(rec)}</div>
+      </div>`;
+    showdownBox.innerHTML = lineFor(sd.a) + lineFor(sd.b);
+    c.appendChild(showdownBox);
+
+    // Only animate once per round; on subsequent re-renders (state updates),
+    // skip straight to the final state so the UI doesn't loop.
+    const animKey = 'sd-' + r.round;
+    const alreadyAnimated = window.__vbLastAnim === animKey;
+    if (alreadyAnimated) {
+      cardsRow.style.opacity = '1';
+      showdownBox.style.opacity = '1';
+    } else {
+      window.__vbLastAnim = animKey;
+      showdownBox.style.opacity = '1'; // reward text visible from start
+      // Animate the 4 cards sequentially
+      const PER = 1700;
+      cardsAll.forEach((val, i) => {
+        setTimeout(() => {
+          if (!stage.isConnected) return;
+          const fc = document.createElement('div');
+          fc.className = 'fly-card';
+          fc.innerHTML = `<div class="num">${val}</div><div class="lbl">GOLD</div>`;
+          stage.appendChild(fc);
+          // Appear (face-down)
+          requestAnimationFrame(() => fc.classList.add('appearing'));
+          // Flip to reveal
+          setTimeout(() => fc.classList.replace('appearing', 'revealed'), 350);
+          // Fly toward winner / drop
+          setTimeout(() => {
+            const tgt = assignments[i];
+            if (tgt === 'a') {
+              fc.classList.remove('revealed');
+              fc.classList.add('to-right');
+              const t = stage.querySelector('#tgt-a');
+              if (t) { t.classList.add('flash'); setTimeout(() => t.classList.remove('flash'), 600); }
+            } else if (tgt === 'b') {
+              fc.classList.remove('revealed');
+              fc.classList.add('to-left');
+              const t = stage.querySelector('#tgt-b');
+              if (t) { t.classList.add('flash'); setTimeout(() => t.classList.remove('flash'), 600); }
+            } else {
+              fc.classList.remove('revealed');
+              fc.classList.add('discard');
+            }
+            // Cleanup DOM after flight
+            setTimeout(() => fc.remove(), 1000);
+          }, 350 + 1000);
+        }, i * PER);
+      });
+      // After all cards finish, fade in the static cards row
+      setTimeout(() => { cardsRow.style.opacity = '1'; }, cardsAll.length * PER + 200);
+    }
+  } else if (r) {
+    c.innerHTML = `<div class="phase-title">نتائج الجولة ${r.round}</div>`;
+    if (r.target) {
+      const t = document.createElement('div');
+      t.className = 'phase-sub';
+      t.innerHTML = `الهدف: <b style="color:${colorOf(r.target)}">${escapeHtml(nameOf(r.target))}</b> ${r.protectedByTarget ? '— استخدم الحماية ونجا!' : '— تم إقصاؤه'}`;
+      c.appendChild(t);
+    } else {
+      const t = document.createElement('div'); t.className = 'phase-sub'; t.textContent = 'لا أحد صوّت';
+      c.appendChild(t);
+    }
+    const list = document.createElement('div'); list.className = 'results';
+    r.votes.forEach(v => {
+      const target = v.vote === 'PROTECT' ? '🛡️ الحماية' : (v.vote ? escapeHtml(nameOf(v.vote)) : 'لم يصوّت');
+      const line = document.createElement('div'); line.className = 'vote-line';
+      line.innerHTML = `<div><span class="dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${colorOf(v.voter)}"></span> ${escapeHtml(nameOf(v.voter))}</div><div>← ${target}</div>`;
+      list.appendChild(line);
+    });
+    c.appendChild(list);
+
+    if (r.eliminated && r.eliminated.length) {
+      const el = document.createElement('div');
+      el.style.marginTop = '12px';
+      el.innerHTML = `<label>تم إقصاؤهم هذه الجولة</label>` +
+        r.eliminated.map(id => `<span class="chip" style="background:#3b0d0d;color:#fecaca;margin:2px">${escapeHtml(nameOf(id))}</span>`).join('');
+      c.appendChild(el);
+    }
+    if (r.soleSurvivor) {
+      const sv = document.createElement('div');
+      sv.style.marginTop = '12px';
+      const cardsStr = (r.soleSurvivor.cards || []).join(', ');
+      sv.innerHTML = `<div class="phase-sub" style="color:var(--accent);font-weight:900">🏆 الناجي الوحيد: ${escapeHtml(nameOf(r.soleSurvivor.id))} أخذ جميع البطاقات الأربع (النقاط: ${cardsStr}) — كسب ${r.soleSurvivor.points}</div>`;
+      c.appendChild(sv);
+    }
+  }
+  s.appendChild(c);
+  s.appendChild(playerScoreCard());
+
+  const continueRound = state.roundOver === false;
+  const nextLabel = continueRound ? 'متابعة الجولة (التصويت من جديد)' : 'بدء الجولة التالية';
+  const waitLabel = continueRound ? 'في انتظار المضيف لمتابعة الجولة...' : 'في انتظار المضيف لبدء الجولة التالية...';
+  if (state.isHost) {
+    const btn = document.createElement('button');
+    btn.className = 'btn';
+    btn.textContent = nextLabel;
+    btn.onclick = () => socket.emit('nextRound');
+    s.appendChild(btn);
+
+    const lobbyBtn = document.createElement('button');
+    lobbyBtn.className = 'btn danger';
+    lobbyBtn.textContent = 'إنهاء والعودة للوبي';
+    lobbyBtn.onclick = () => {
+      if (confirm('سيتم تصفير جميع النقاط وإعادة كل اللاعبين للوبي. متابعة؟')) {
+        socket.emit('returnToLobby');
+      }
+    };
+    s.appendChild(lobbyBtn);
+  } else {
+    const w = document.createElement('div'); w.className = 'card center muted';
+    w.textContent = waitLabel;
+    s.appendChild(w);
+  }
+  app.appendChild(s);
+}
+
+function renderShowdown() {
+  const s = document.createElement('div'); s.className = 'screen';
+  s.appendChild(header());
+
+  const c = document.createElement('div'); c.className = 'card center';
+  const cardsArr = state.goldCards || [];
+  const totalCount = state.goldCardsCount || 4;
+  const revealed = cardsArr.length > 0;
+  c.innerHTML = `<div class="phase-title">المواجهة النهائية</div><div class="phase-sub">${revealed ? 'البطاقات الذهبية (4):' : '4 بطاقات ذهبية — تُكشف قيمتها بعد قرار اللاعبين'}</div>`;
+  const gold = document.createElement('div'); gold.className = 'gold-cards-row';
+  if (revealed) {
+    gold.innerHTML = cardsArr.map(v => `<div class="mini-gold">${v}</div>`).join('');
+  } else {
+    gold.innerHTML = Array.from({ length: totalCount }).map(() => `<div class="mini-gold hidden-card">؟</div>`).join('');
+  }
+  c.appendChild(gold);
+  const chosen = state.showdownChosenIds || [];
+  const finalists = state.players.filter(p => p.alive);
+  const finalistsEl = document.createElement('div'); finalistsEl.className = 'finalists';
+  const renderFinalist = (p) => {
+    const ready = chosen.includes(p.id);
+    const isMe = state.me && p.id === state.me.id;
+    return `<div class="finalist ${ready?'ready':''}">
+      <div class="avatar" style="background:${colorOf(p.id)}"></div>
+      <div class="fname">${escapeHtml(p.name)}${isMe?' <span class="muted small">(أنت)</span>':''}</div>
+      ${ready
+        ? `<div class="fstatus ready">جاهز ✓</div>`
+        : `<div class="fstatus thinking">يفكر <span class="dots"><span></span><span></span><span></span></span></div>`}
+    </div>`;
+  };
+  finalistsEl.innerHTML = `${finalists[0]?renderFinalist(finalists[0]):''}<div class="vs-badge">VS</div>${finalists[1]?renderFinalist(finalists[1]):''}`;
+  c.appendChild(finalistsEl);
+  c.appendChild(timerEl());
+  s.appendChild(c);
+
+  if (state.me.alive) {
+    const myChosen = (state.showdownChosenIds || []).includes(state.me.id);
+    const choices = document.createElement('div'); choices.className = 'card';
+    if (myChosen) {
+      choices.innerHTML = `<label>تم تثبيت اختيارك ✓</label><div class="muted small">لا يمكن تغيير الاختيار. بانتظار الخصم...</div>`;
+    } else {
+      choices.innerHTML = `<label>اختر:</label>`;
+      [
+        { id: 'share', name: 'مشاركة', desc: 'إذا اختار خصمك المشاركة، تتقاسمان النقاط' },
+        { id: 'steal', name: 'سرقة', desc: 'إذا اختار خصمك المشاركة، تأخذ كل شيء' },
+        { id: 'guarantee', name: 'ضمان', desc: 'تأخذ نقطة مضمونة' },
+      ].forEach(opt => {
+        const b = document.createElement('button'); b.className = 'vote-btn';
+        b.innerHTML = `<div style="text-align:right;flex:1"><div style="font-size:18px">${opt.name}</div><div class="muted small">${opt.desc}</div></div>`;
+        b.onclick = () => socket.emit('showdownChoice', { choice: opt.id });
+        choices.appendChild(b);
+      });
+    }
+    s.appendChild(choices);
+  } else {
+    const w = document.createElement('div'); w.className = 'card center muted';
+    w.textContent = 'أنت متفرج — شاهد المواجهة النهائية';
+    s.appendChild(w);
+  }
+  s.appendChild(playerScoreCard());
+  app.appendChild(s);
+}
+
+function renderGameOver() {
+  const s = document.createElement('div'); s.className = 'screen';
+  s.appendChild(header());
+
+  const c = document.createElement('div'); c.className = 'card center';
+  c.innerHTML = `<div class="phase-title" style="font-size:28px">🏆 انتهت اللعبة</div>`;
+  s.appendChild(c);
+
+  const lb = document.createElement('div'); lb.className = 'card';
+  lb.innerHTML = `<label>الترتيب النهائي</label>`;
+  const list = document.createElement('div'); list.className = 'leaderboard';
+  const ranked = (state.leaderboard || []).slice().sort((a,b) => b.score - a.score);
+  ranked.forEach((p, i) => {
+    const row = document.createElement('div'); row.className = 'lb-row' + (i === 0 ? ' win' : '');
+    row.innerHTML = `<div class="rank">${i+1}</div><div class="dot" style="width:14px;height:14px;border-radius:50%;background:${colorOf(p.id)}"></div><div class="nm" style="flex:1">${escapeHtml(p.name)}${i===0?' 👑':''}</div><div class="pts">${p.score}</div>`;
+    list.appendChild(row);
+  });
+  lb.appendChild(list);
+  s.appendChild(lb);
+
+  if (state.isHost) {
+    const b = document.createElement('button'); b.className = 'btn';
+    b.textContent = 'العب مرة أخرى';
+    b.onclick = () => socket.emit('playAgain');
+    s.appendChild(b);
+
+    const lobbyBtn = document.createElement('button');
+    lobbyBtn.className = 'btn danger';
+    lobbyBtn.textContent = 'إنهاء والعودة للوبي';
+    lobbyBtn.onclick = () => {
+      if (confirm('سيتم تصفير جميع النقاط وإعادة كل اللاعبين للوبي. متابعة؟')) {
+        socket.emit('returnToLobby');
+      }
+    };
+    s.appendChild(lobbyBtn);
+  }
+  app.appendChild(s);
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+socket.on('state', (st) => {
+  state = st;
+  if (state.phase === 'gameover' && state.lastResults && state.lastResults.leaderboard) {
+    state.leaderboard = state.lastResults.leaderboard;
+  }
+  // Refresh session key in case server-side it changed (shouldn't, but harmless).
+  if (state.me && state.code) {
+    const sess = loadSession();
+    if (!sess || sess.code !== state.code || sess.playerKey !== state.me.id) {
+      saveSession(state.code, state.me.id);
+    }
+  }
+  lastErr = '';
+  render();
+});
+
+socket.on('kicked', () => {
+  clearSession();
+  state = null;
+  lastErr = 'تم طردك من الغرفة';
+  render();
+});
+
+// Mid-phase reconnection sync: server pushes the live phase directly to a
+// returning player so their UI jumps straight to voting/showdown/etc. with
+// the correct remaining time, instead of sitting on a blank/lobby screen.
+socket.on('syncGameState', (st) => {
+  state = st;
+  if (state.phase === 'gameover' && state.lastResults && state.lastResults.leaderboard) {
+    state.leaderboard = state.lastResults.leaderboard;
+  }
+  if (state.me && state.code) saveSession(state.code, state.me.id);
+  lastErr = '';
+  render();
+});
+
+// Host pressed "Return to Lobby" — everyone snaps back to the lobby UI
+// without dropping the socket connection.
+socket.on('forceLobby', () => {
+  // Reset any in-flight animation tracking so the next round animates fresh.
+  window.__vbLastAnim = null;
+  // The 'state' event that follows will repaint into the lobby; nothing else to do.
+});
+
+socket.on('connect', () => {
+  // On (re)connect, if we have a session, resume immediately.
+  tryReconnect();
+});
+
+socket.on('connect_error', () => { lastErr = 'فشل الاتصال بالخادم'; render(); });
+
+setInterval(() => socket.emit('ping', () => {}), 25000);
+
+// First paint: if we already have a session, attempt reconnect; otherwise show home.
+if (!tryReconnect()) render();
+</script>
+</body>
+</html>
